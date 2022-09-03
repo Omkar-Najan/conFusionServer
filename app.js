@@ -8,12 +8,18 @@ var app = express();
 var session = require('express-session');
 var FileStore = require('session-file-store')(session);
 
+//passport auth
+var passport = require('passport');
+var authenticate = require('./authenticate');
+
 
 // middlewares
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false })); 
 app.use(express.static(path.join(__dirname, 'public')));
+
+// passport auth
 
 // Use of Cookies
 // use of signed cookies so parse secret key 
@@ -27,6 +33,10 @@ app.use(session({
 	resave: false,
 	store: new FileStore()
 }))
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
@@ -43,23 +53,14 @@ anybody can not access data without authentication.
 */ 
 function auth(req,res,next){
 
-	console.log('Information about session is as follows .. ');
-    console.log(req.session);
-	console.log('\n');
-
-    if(!req.session.user){
-		var err = new Error('You are not authenticated!')
+	console.log(req.user);
+	if(!req.user){
+		var err = Error('You are not authenticated!!');
 		err.status = 403;
-		return next(err);
-
-	}else{
-		if(req.session.user === 'authenticated'){
-			next();
-		}else{
-			var err = new Error('You are not authenticated!')
-			err.status = 401;
-			return next(err);
-		}
+		next(err);
+	}
+	else{
+		next();
 	}
 }
 
